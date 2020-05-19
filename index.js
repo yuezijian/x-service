@@ -1,56 +1,69 @@
-import Koa from 'koa';
+import fs   from 'fs';
+import http from 'http';
 
-import { createServer } from 'http'
+import jwt from 'jsonwebtoken';
 
-import { gql, makeExecutableSchema, ApolloServer } from 'apollo-server-koa';
+import Koa           from 'koa';
+import KoaBodyParser from 'koa-bodyparser';
+import KoaJWT        from 'koa-jwt';
 
+import KoaCORS   from '@koa/cors';
+import KoaRouter from '@koa/router';
 
-const definitions = gql
-    `
-    type Query
-    {
-      hi: String
-    }
-  `;
+import service_gql from './service/graphql';
 
 
-const resolvers =
+const secret = fs.readFileSync('./secret.pub');
+
+const payload = {};
+
+const token = jwt.sign(payload, secret);
+
+console.log(token);
+
+
+function Authentication(ctx, next)
+{
+  if (ctx.url.match(/^\/authentication/))
   {
-    Query:
-      {
-        hi: (parent, args, context, info) =>
-        {
-          console.log(parent);
-          console.log(args);
-          console.log(context);
-          console.log(info);
-
-          return 'hello~';
-        }
-      }
-  };
-
-
-
-const config =
+    ctx.body = 'Authentication\n';
+  }
+  else
   {
-    schema: makeExecutableSchema({ typeDefs: definitions, resolvers: resolvers })
-  };
+    return next();
+  }
+}
 
-const apollo = new ApolloServer(config);
 
 const app = new Koa();
 
-const server = createServer(app.callback());
+const router = new KoaRouter();
 
-const host = 'localhost';
+router.all(service_gql.path, service_gql.middleware);
+
+app.use(KoaBodyParser());
+app.use(KoaCORS());
+app.use(KoaJWT({ secret }).unless({ path: [/^\/authentication/] }));
+
+app.use(Authentication);
+
+app.use(router.routes());
+app.use(router.allowedMethods());
+
+
+const option =
+  {
+    key: fs.readFileSync('./server.key', 'utf8'),
+    cert: fs.readFileSync('./server.cert', 'utf8')
+  };
+
+const server = http.createServer(option, app.callback());
+
 const port = 4000;
 
 const callback = () =>
 {
-  console.log(`🚀 Server ready at http://${ host }:${ port }${ apollo.graphqlPath }`);
+  console.log(`🚀 Server ready at http://localhost:${ port }${ service_gql.path }`);
 };
-
-app.use(apollo.getMiddleware());
 
 server.listen(port, callback);
