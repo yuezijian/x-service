@@ -43,9 +43,9 @@ router.all(service_gql.path, service_gql.middleware);
 
 app.use(KoaBodyParser());
 app.use(KoaCORS());
-app.use(KoaJWT({ secret }).unless({ path: [/^\/authentication/] }));
+// app.use(KoaJWT({ secret }).unless({ path: [/^\/authentication/] }));
 
-app.use(Authentication);
+// app.use(Authentication);
 
 app.use(router.routes());
 app.use(router.allowedMethods());
