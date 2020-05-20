@@ -22,11 +22,33 @@ const token = jwt.sign(payload, secret);
 console.log(token);
 
 
+function Status_401(ctx, next)
+{
+  const on_reject = (error) =>
+  {
+    if (401 === error.status)
+    {
+      ctx.status = 401;
+      ctx.body = 'Protected resource, use Authorization header to get access\n';
+
+      // ctx.redirect(`${ ctx.request.header.origin }/login`)
+    }
+    else
+    {
+      throw error;
+    }
+  };
+
+  return next().catch(on_reject);
+}
+
 function Authentication(ctx, next)
 {
   if (ctx.url.match(/^\/authentication/))
   {
-    ctx.body = 'Authentication\n';
+    console.log(ctx.request.body);
+
+    ctx.body = token;
   }
   else
   {
@@ -43,10 +65,11 @@ router.all(service_gql.path, service_gql.middleware);
 
 app.use(KoaBodyParser());
 app.use(KoaCORS());
-// app.use(KoaJWT({ secret }).unless({ path: [/^\/authentication/] }));
 
-// app.use(Authentication);
+// app.use(Status_401);
 
+app.use(KoaJWT({ secret }).unless({ path: [/^\/authentication/] }));
+app.use(Authentication);
 app.use(router.routes());
 app.use(router.allowedMethods());
 
