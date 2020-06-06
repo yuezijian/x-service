@@ -2,7 +2,7 @@
   "name": "x-service",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "src/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -14,10 +14,12 @@
     "@koa/router": "^8.0.8",
     "apollo-server-koa": "^2.13.1",
     "graphql": "^15.0.0",
+    "graphql-subscriptions": "^1.1.0",
     "jsonwebtoken": "^8.5.1",
     "koa": "^2.11.0",
     "koa-bodyparser": "^4.3.0",
-    "koa-jwt": "^3.6.0"
+    "koa-jwt": "^3.6.0",
+    "subscriptions-transport-ws": "^0.9.16"
   },
   "devDependencies": {
     "babel-cli": "^6.26.0",
