@@ -3,26 +3,13 @@ import { PubSub } from 'graphql-subscriptions';
 
 const ps = new PubSub();
 
-let gid = 6;
+let gid = 1;
 
 const db =
   {
     items:
       [
-        { id: '1', name: '这是' },
-        { id: '2', name: '一个'   },
-        { id: '3', name: '订阅'   },
-        { id: '4', name: '机制'   },
-        { id: '5', name: '展示'   },
       ]
-    // items:
-    //   [
-    //     { id: '1', name: 'love' },
-    //     { id: '2', name: 'my'   },
-    //     { id: '3', name: 'yf'   },
-    //     { id: '4', name: 'fk'   },
-    //     { id: '5', name: 'me'   },
-    //   ]
   };
 
 const resolvers =
@@ -56,7 +43,7 @@ const resolvers =
           return '';
         },
 
-        add_item: (_, { name }) =>
+        item_add: (_, { name }) =>
         {
           const item = { id: gid.toString(), name };
 
@@ -66,7 +53,35 @@ const resolvers =
 
           const payload = { item };
 
-          ps.publish('item_add', payload);
+          ps.publish('on_item_add', payload);
+
+          return { success: true, message: 'done', item };
+        },
+
+        item_remove: (_, { id }) =>
+        {
+          const index = db.items.findIndex((item) => item.id === id);
+
+          const item = db.items[index];
+
+          db.items.splice(index, 1);
+
+          const payload = { item };
+
+          ps.publish('on_item_remove', payload);
+
+          return { success: true, message: 'done', item };
+        },
+
+        item_update: (_, { id, name }) =>
+        {
+          const item = db.items.find((item) => item.id === id);
+
+          item.name = name;
+
+          const payload = { item };
+
+          ps.publish('on_item_update', payload);
 
           return { success: true, message: 'done', item };
         }
@@ -74,14 +89,34 @@ const resolvers =
 
     Subscription:
       {
-        item_add:
+        on_item_add:
           {
             resolve: (payload) =>
             {
               return payload.item;
             },
 
-            subscribe: () => ps.asyncIterator('item_add')
+            subscribe: () => ps.asyncIterator('on_item_add')
+          },
+
+        on_item_remove:
+          {
+            resolve: (payload) =>
+            {
+              return payload.item;
+            },
+
+            subscribe: () => ps.asyncIterator('on_item_remove')
+          },
+
+        on_item_update:
+          {
+            resolve: (payload) =>
+            {
+              return payload.item;
+            },
+
+            subscribe: () => ps.asyncIterator('on_item_update')
           }
       }
   };
