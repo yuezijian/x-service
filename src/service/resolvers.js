@@ -1,5 +1,7 @@
 import { PubSub } from 'graphql-subscriptions';
 
+import pgst from './temp/pgst';
+
 
 const ps = new PubSub();
 
@@ -31,7 +33,9 @@ const resolvers =
           return db.items.find(item => item.id === id);
         },
 
-        items: () => db.items
+        items: () => db.items,
+
+        projects: () => pgst()
       },
 
     Mutation:
