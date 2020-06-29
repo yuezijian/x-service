@@ -68,7 +68,70 @@ const tables =
   ];
 
 
-function init_metadata(sequelize)
+async function create_dev_data(sequelize, { Table, Attribute, Association })
+{
+  {
+    const table = await Table.create({ name: 'Department' });
+
+    {
+      const attribute = await Attribute.create({ name: 'name', type: 'string', allow_null: false, note: 'department.name' });
+
+      await table.addAttribute(attribute);
+    }
+    {
+      const attribute = await Attribute.create({ name: 'note', type: 'string',  note: 'department.note' });
+
+      await table.addAttribute(attribute);
+    }
+  }
+  {
+    const table = await Table.create({ name: 'Doctor' });
+
+    {
+      const attribute = await Attribute.create({ name: 'name', type: 'string', allow_null: false, note: 'doctor.name' });
+
+      await table.addAttribute(attribute);
+    }
+  }
+  {
+    const department = await Table.findOne({ where: { name: 'Department' } });
+    const doctor     = await Table.findOne({ where: { name: 'Doctor'     } });
+
+    const association = await Association.create({ relationship: 'has_many' });
+
+    await association.setSource(department);
+    await association.setTarget(doctor);
+  }
+
+  // const Department = sequelize.models['Department'];
+  // const Doctor     = sequelize.models['Doctor'    ];
+  // const Drug       = sequelize.models['Drug'      ];
+  // const Patient    = sequelize.models['Patient'   ];
+  // const Order      = sequelize.models['Order'     ];
+  //
+  // const [department_doctor] = await Department.findOrCreate({ where: { name: '科室1' } });
+  // const [department_drug  ] = await Department.findOrCreate({ where: { name: '药房1' } });
+  //
+  // const [doctor ] = await  Doctor.findOrCreate({ where: { name: '医生1' } });
+  // const [drug   ] = await    Drug.findOrCreate({ where: { name: '药品1' } });
+  // const [patient] = await Patient.findOrCreate({ where: { name: '患者1' } });
+  // const [order  ] = await   Order.findOrCreate({ where: { name: '医嘱1' } });
+  //
+  // await doctor.setDepartment(department_doctor);  // department_doctor.addDoctor(doctor);
+  //
+  // await drug.setDepartment(department_drug);  // department_drug.addDrug(drug);
+  //
+  // await order.setDoctor(doctor);
+  // await order.setDrug(drug);
+  // await order.setPatient(patient);
+  //
+  // const order = await Order.findOne();
+  // const order = await Order.findOne({ include: ['Doctor', 'Drug', 'Patient'] });
+  //
+  // console.log(order.toJSON());
+}
+
+async function init_metadata(sequelize)
 {
   const table =
     {
@@ -188,7 +251,11 @@ function init_metadata(sequelize)
   Association.belongsTo(Table, { as: 'Source' });
   Association.belongsTo(Table, { as: 'Target' });
 
-  return { Table, Attribute, Association };
+  const tables       = await       Table.findAll();
+  const attributes   = await   Attribute.findAll();
+  const associations = await Association.findAll();
+
+  return { tables, attributes, associations };
 
   // for (const t of tables)
   // {
@@ -217,17 +284,15 @@ function init_metadata(sequelize)
   // Order.belongsTo(Drug);
 }
 
+
 const types =
   {
     string: DataTypes.STRING
-  }
+  };
 
-async function init_models(sequelize, { Table, Attribute, Association })
+
+async function init_models(sequelize, { tables, attributes, associations })
 {
-  const tables = await Table.findAll();
-
-  const attributes = await Attribute.findAll();
-
   const build_attribute = (a, m) =>
   {
     m.attributes[a.name] =
@@ -272,7 +337,39 @@ async function init_models(sequelize, { Table, Attribute, Association })
   await sequelize.sync();
 }
 
-async function run()
+
+function read_objects({ tables, attributes, associations })
+{
+  const to_property = (a) =>
+  {
+    const property =
+      {
+        name: a.name,
+        type: a.type,
+        note: a.note,
+      };
+
+    return property;
+  };
+
+  const to_object = (t) =>
+  {
+    const object =
+      {
+        name: t.name,
+        note: '',
+
+        properties: attributes.filter(a => t.id === a.TableId).map(to_property),
+      };
+
+    return object;
+  };
+
+  return tables.map(to_object);
+}
+
+
+async function connect()
 {
   const connection = 'postgres://admin:admin@localhost:5432/postgres';
 
@@ -283,81 +380,41 @@ async function run()
 
   await sequelize.authenticate();
 
-  const { Table, Attribute, Association } = init_metadata(sequelize);
+  return sequelize;
+}
+
+async function run()
+{
+  const sequelize = await connect();
+
+  const { tables, attributes, associations } = await init_metadata(sequelize);
+
+  await sequelize.close();
+
+  return read_objects({ tables, attributes, associations });
 
   // await sequelize.sync({ force: true });
 
-  await init_models(sequelize, { Table, Attribute, Association });
+  // await init_models(sequelize, { tables, attributes, associations });
 
   // const associations = await Association.findAll({ include: [{ model: Table, as: 'Source' }, { model: Table, as: 'Target' }] });
 
   // associations.forEach(value => console.log(value.toJSON()));
 
-  if (false)
-  {
-    {
-      const table = await Table.create({ name: 'Department' });
+  // await create_dev_data(sequelize, { Table, Attribute, Association })
 
-      {
-        const attribute = await Attribute.create({ name: 'name', type: 'string', allow_null: false, note: 'department.name' });
-
-        await table.addAttribute(attribute);
-      }
-      {
-        const attribute = await Attribute.create({ name: 'note', type: 'string',  note: 'department.note' });
-
-        await table.addAttribute(attribute);
-      }
-    }
-    {
-      const table = await Table.create({ name: 'Doctor' });
-
-      {
-        const attribute = await Attribute.create({ name: 'name', type: 'string', allow_null: false, note: 'doctor.name' });
-
-        await table.addAttribute(attribute);
-      }
-    }
-    {
-      const department = await Table.findOne({ where: { name: 'Department' } });
-      const doctor     = await Table.findOne({ where: { name: 'Doctor'     } });
-
-      const association = await Association.create({ relationship: 'has_many' });
-
-      await association.setSource(department);
-      await association.setTarget(doctor);
-    }
-  }
-
-
-  // const Department = sequelize.models['Department'];
-  // const Doctor     = sequelize.models['Doctor'    ];
-  // const Drug       = sequelize.models['Drug'      ];
-  // const Patient    = sequelize.models['Patient'   ];
-  // const Order      = sequelize.models['Order'     ];
-
-  // const [department_doctor] = await Department.findOrCreate({ where: { name: '科室1' } });
-  // const [department_drug  ] = await Department.findOrCreate({ where: { name: '药房1' } });
-
-  // const [doctor ] = await  Doctor.findOrCreate({ where: { name: '医生1' } });
-  // const [drug   ] = await    Drug.findOrCreate({ where: { name: '药品1' } });
-  // const [patient] = await Patient.findOrCreate({ where: { name: '患者1' } });
-  // const [order  ] = await   Order.findOrCreate({ where: { name: '医嘱1' } });
-
-  // await doctor.setDepartment(department_doctor);  // department_doctor.addDoctor(doctor);
-
-  // await drug.setDepartment(department_drug);  // department_drug.addDrug(drug);
-
-  // await order.setDoctor(doctor);
-  // await order.setDrug(drug);
-  // await order.setPatient(patient);
-
-  // const order = await Order.findOne();
-  // const order = await Order.findOne({ include: ['Doctor', 'Drug', 'Patient'] });
-
-  // console.log(order.toJSON());
-
-  await sequelize.close();
 }
 
-run().catch(error => console.log(error));
+// run().catch(error => console.log(error));
+
+
+const orm =
+  {
+    objects()
+    {
+      return run();
+    }
+  };
+
+
+export default orm;

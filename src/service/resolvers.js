@@ -2,6 +2,8 @@ import { PubSub } from 'graphql-subscriptions';
 
 import pgst from './temp/pgst';
 
+import orm from '../orm';
+
 
 const ps = new PubSub();
 
@@ -35,7 +37,9 @@ const resolvers =
 
         items: () => db.items,
 
-        domains: () => pgst()
+        domains: () => pgst(),
+
+        orm: () => orm.objects()
       },
 
     Mutation:

@@ -5,7 +5,7 @@ const definitions = gql
   `
     type Property
     {
-      index: Int
+      id:   ID
 
       name: String
       type: String
@@ -14,7 +14,7 @@ const definitions = gql
 
     type Object
     {
-      index: Int
+      id:   ID
 
       name: String
       note: String
@@ -24,7 +24,7 @@ const definitions = gql
 
     type Project
     {
-      index: Int
+      id:   ID
 
       name: String
 
@@ -33,7 +33,7 @@ const definitions = gql
 
     type Domain
     {
-      index: Int
+      id:   ID
 
       name: String
 
@@ -78,6 +78,8 @@ const definitions = gql
       items: [Item]
 
       domains: [Domain]
+
+      orm: [Object]
     }
 
     type Mutation
