@@ -35,7 +35,7 @@ const resolvers =
 
         items: () => db.items,
 
-        projects: () => pgst()
+        domains: () => pgst()
       },
 
     Mutation:

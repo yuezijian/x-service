@@ -22,7 +22,7 @@ const definitions = gql
       properties: [Property]
     }
 
-    type Namespace
+    type Project
     {
       index: Int
 
@@ -31,13 +31,13 @@ const definitions = gql
       objects: [Object]
     }
 
-    type Project
+    type Domain
     {
       index: Int
 
       name: String
 
-      namespaces: [Namespace]
+      projects: [Project]
     }
 
     type Date
@@ -77,7 +77,7 @@ const definitions = gql
 
       items: [Item]
 
-      projects: [Project]
+      domains: [Domain]
     }
 
     type Mutation
