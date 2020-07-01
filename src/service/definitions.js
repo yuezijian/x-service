@@ -5,17 +5,15 @@ const definitions = gql
   `
     type Property
     {
-      id:   ID
-
-      name: String
-      type: String
-      note: String
+      name:          String
+      type:          String
+      not_null:      Boolean
+      default_value: String
+      note:          String
     }
 
     type Object
     {
-      id:   ID
-
       name: String
       note: String
 
@@ -69,6 +67,13 @@ const definitions = gql
       item:    Item
     }
 
+    type MutationResponseObject
+    {
+      success: Boolean!
+      message: String
+      object:  Object
+    }
+
     type Query
     {
       hi: String
@@ -91,6 +96,8 @@ const definitions = gql
       item_remove(id: ID!): MutationResponseItem!
 
       item_update(id: ID!, name: String!): MutationResponseItem!
+
+      object_add(name: String!): MutationResponseObject!
     }
 
     type Subscription

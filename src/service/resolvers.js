@@ -92,6 +92,13 @@ const resolvers =
           ps.publish('on_item_update', payload);
 
           return { success: true, message: 'done', item };
+        },
+
+        object_add: async (_, { name }) =>
+        {
+          const object = await orm.object_add(name);
+
+          return { success: true, message: 'done', object };
         }
       },
 
