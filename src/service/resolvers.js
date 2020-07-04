@@ -39,7 +39,7 @@ const resolvers =
 
         domains: () => pgst(),
 
-        orm: () => orm.objects()
+        orm: () => orm.entities()
       },
 
     Mutation:
@@ -94,11 +94,11 @@ const resolvers =
           return { success: true, message: 'done', item };
         },
 
-        object_add: async (_, { name }) =>
+        entity_add: async (_, { name }) =>
         {
-          const object = await orm.object_add(name);
+          const entity = await orm.entity_add(name);
 
-          return { success: true, message: 'done', object };
+          return { success: true, message: 'done', entity };
         }
       },
 

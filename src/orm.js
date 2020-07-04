@@ -246,7 +246,7 @@ const types =
   };
 
 
-async function init_objects(sequelize, { models, attributes, associations })
+async function init_entities(sequelize, { models, attributes, associations })
 {
   const build_attribute = (a, m) =>
   {
@@ -293,7 +293,7 @@ async function init_objects(sequelize, { models, attributes, associations })
 }
 
 
-async function read_objects(Model, Attribute, Association)
+async function read_entities(Model, Attribute, Association)
 {
   const models       = await       Model.findAll();
   const attributes   = await   Attribute.findAll();
@@ -303,28 +303,30 @@ async function read_objects(Model, Attribute, Association)
   {
     const property =
       {
-        name: a.name,
-        type: a.type,
-        note: a.note,
+        name:          a.name,
+        type:          a.type,
+        not_null:      a.not_null,
+        default_value: a.default_value,
+        note:          a.note,
       };
 
     return property;
   };
 
-  const to_object = (t) =>
+  const to_entity = (t) =>
   {
-    const object =
+    const entity =
       {
         name: t.name,
-        note: '',
+        note: t.note,
 
         properties: attributes.filter(a => t.id === a.ModelId).map(to_property),
       };
 
-    return object;
+    return entity;
   };
 
-  return models.map(to_object);
+  return models.map(to_entity);
 }
 
 
@@ -358,20 +360,20 @@ const orm =
       await sequelize.close();
     },
 
-    async objects()
+    async entities()
     {
       const sequelize = await connect();
 
       const { Model, Attribute, Association } = await init_metadata(sequelize);
 
-      const objects = await read_objects(Model, Attribute, Association);
+      const entities = await read_entities(Model, Attribute, Association);
 
       await sequelize.close();
 
-      return objects;
+      return entities;
     },
 
-    async object_add(name)
+    async entity_add(name)
     {
       const sequelize = await connect();
 
@@ -413,3 +415,8 @@ export default orm;
 //
 // Drug.hasOne(Order);
 // Order.belongsTo(Drug);
+
+
+
+
+

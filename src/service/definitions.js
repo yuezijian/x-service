@@ -12,7 +12,7 @@ const definitions = gql
       note:          String
     }
 
-    type Object
+    type Entity
     {
       name: String
       note: String
@@ -26,7 +26,7 @@ const definitions = gql
 
       name: String
 
-      objects: [Object]
+      entities: [Entity]
     }
 
     type Domain
@@ -67,11 +67,11 @@ const definitions = gql
       item:    Item
     }
 
-    type MutationResponseObject
+    type MutationResponseEntity
     {
       success: Boolean!
       message: String
-      object:  Object
+      entity:  Entity
     }
 
     type Query
@@ -84,7 +84,7 @@ const definitions = gql
 
       domains: [Domain]
 
-      orm: [Object]
+      orm: [Entity]
     }
 
     type Mutation
@@ -97,7 +97,7 @@ const definitions = gql
 
       item_update(id: ID!, name: String!): MutationResponseItem!
 
-      object_add(name: String!): MutationResponseObject!
+      entity_add(name: String!): MutationResponseEntity!
     }
 
     type Subscription
