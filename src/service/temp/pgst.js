@@ -87,7 +87,7 @@ function process(rows)
         tables.push({ index: i_tb++, name: k_tb, properties, note });
       }
 
-      schemas.push({ index: i_sm++, name: k_sm, objects: tables });
+      schemas.push({ index: i_sm++, name: k_sm, entities: tables });
     }
 
     databases.push({ index: i_db++, name: k_db, projects: schemas });
