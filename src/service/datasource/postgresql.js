@@ -1,4 +1,6 @@
-import database from '../../database/postgresql';
+import { DataSource } from 'apollo-datasource';
+
+import postgres from '../../database/postgresql';
 
 
 const sql =
@@ -97,12 +99,24 @@ function process(rows)
 }
 
 
-async function pgst()
+class Source extends DataSource
 {
-  const rows = await database.query(sql);
+  constructor()
+  {
+    super();
+  }
 
-  return process(rows);
+  initialize(config)
+  {
+  }
+
+  async structure(database)
+  {
+    const rows = await postgres.query(database ? database : 'postgres', sql);
+
+    return process(rows);
+  }
 }
 
 
-export default pgst;
+export default Source;

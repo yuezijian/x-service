@@ -1,16 +1,7 @@
 import { Client } from 'pg';
 
 
-const config =
-  {
-    host:     '10.68.4.74',
-    port:     '5432',
-    database: 'postgres',
-    user:     'admin',
-    password: 'msunsoft007'
-  };
-
-async function execute(sql)
+async function execute(config, sql)
 {
   const client = new Client(config);
 
@@ -23,13 +14,24 @@ async function execute(sql)
   return result.rows;
 }
 
-const database =
+const postgres =
   {
-    async query(sql)
+    async query(database, sql)
     {
-      return execute(sql);
+      const config =
+        {
+          host:     '10.68.4.74',
+          port:     '5432',
+
+          database: database,
+
+          user:     'admin',
+          password: 'msunsoft007'
+        };
+
+      return execute(config, sql);
     }
   }
 
 
-export default database;
+export default postgres;

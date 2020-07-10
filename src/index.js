@@ -18,6 +18,10 @@ import { SubscriptionServer } from 'subscriptions-transport-ws';
 
 import schema from './service/schema';
 
+import SourceArray from './service/datasource/array';
+import SourceORM   from './service/datasource/orm';
+import SourcePG    from './service/datasource/postgresql';
+
 
 const secret = fs.readFileSync('./secret.pub');
 
@@ -86,7 +90,18 @@ const config =
     subscriptions:
       {
         path: '/subscriptions'
-      }
+      },
+
+    dataSources: () =>
+    {
+      const array = new SourceArray();
+
+      const orm = new SourceORM();
+
+      const postgres = new SourcePG();
+
+      return { array, orm, postgres };
+    }
   };
 
 const apollo = new ApolloServer(config);

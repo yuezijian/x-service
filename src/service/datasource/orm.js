@@ -1,3 +1,5 @@
+import { DataSource } from 'apollo-datasource';
+
 import { Sequelize, Model, DataTypes } from 'sequelize';
 
 
@@ -345,48 +347,60 @@ async function connect()
 }
 
 
-const orm =
+
+class Source extends DataSource
+{
+  constructor()
   {
-    async reset()
-    {
-      const sequelize = await connect();
+    super();
+  }
 
-      const { Model, Attribute, Association } = await init_metadata(sequelize);
+  initialize(config)
+  {
+  }
 
-      await sequelize.sync({ force: true });
+  async reset()
+  {
+    const sequelize = await connect();
 
-      await create_dev_data(Model, Attribute, Association);
+    const { Model, Attribute, Association } = await init_metadata(sequelize);
 
-      await sequelize.close();
-    },
+    await sequelize.sync({ force: true });
 
-    async entities()
-    {
-      const sequelize = await connect();
+    await create_dev_data(Model, Attribute, Association);
 
-      const { Model, Attribute, Association } = await init_metadata(sequelize);
+    await sequelize.close();
+  }
 
-      const entities = await read_entities(Model, Attribute, Association);
+  async entities()
+  {
+    const sequelize = await connect();
 
-      await sequelize.close();
+    const { Model, Attribute, Association } = await init_metadata(sequelize);
 
-      return entities;
-    },
+    const entities = await read_entities(Model, Attribute, Association);
 
-    async entity_add(name)
-    {
-      const sequelize = await connect();
+    await sequelize.close();
 
-      const { Model, Attribute, Association } = await init_metadata(sequelize);
+    return entities;
+  }
 
-      const model = await Model.create({ name });
+  async entity_add(name)
+  {
+    const sequelize = await connect();
 
-      return { name, note: '', properties: [] };
-    }
-  };
+    const { Model, Attribute, Association } = await init_metadata(sequelize);
+
+    const model = await Model.create({ name });
+
+    await sequelize.close();
+
+    return { name, note: '', properties: [] };
+  }
+}
 
 
-export default orm;
+export default Source;
 
 
 // await init_models(sequelize, { tables, attributes, associations });

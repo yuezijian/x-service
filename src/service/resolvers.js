@@ -1,20 +1,8 @@
 import { PubSub } from 'graphql-subscriptions';
 
-import pgst from './temp/pgst';
-
-import orm from '../orm';
-
 
 const ps = new PubSub();
 
-let gid = 1;
-
-const db =
-  {
-    items:
-      [
-      ]
-  };
 
 const resolvers =
   {
@@ -30,16 +18,25 @@ const resolvers =
           return 'hello ~';
         },
 
-        item: (_, { id }) =>
+        item: (_1, { id }, { dataSources: { array } }) =>
         {
-          return db.items.find(item => item.id === id);
+          return array(id);
         },
 
-        items: () => db.items,
+        items: (_1, _2, { dataSources: { array } }) =>
+        {
+          return array.all();
+        },
 
-        domains: () => pgst(),
+        domains: (_1, { database }, { dataSources: { postgres } }) =>
+        {
+          return postgres.structure(database);
+        },
 
-        orm: () => orm.entities()
+        orm: (_1, _2, { dataSources: { orm } }) =>
+        {
+          return orm.entities();
+        }
       },
 
     Mutation:
@@ -51,13 +48,9 @@ const resolvers =
           return '';
         },
 
-        item_add: (_, { name }) =>
+        item_add: (_, { name }, { dataSources: { array } }) =>
         {
-          const item = { id: gid.toString(), name };
-
-          db.items.push(item);
-
-          gid += 1;
+          const item = array.add(name);
 
           const payload = { item };
 
@@ -66,13 +59,9 @@ const resolvers =
           return { success: true, message: 'done', item };
         },
 
-        item_remove: (_, { id }) =>
+        item_remove: (_, { id }, { dataSources: { array } }) =>
         {
-          const index = db.items.findIndex((item) => item.id === id);
-
-          const item = db.items[index];
-
-          db.items.splice(index, 1);
+          const item = array.remove(id);
 
           const payload = { item };
 
@@ -81,11 +70,9 @@ const resolvers =
           return { success: true, message: 'done', item };
         },
 
-        item_update: (_, { id, name }) =>
+        item_update: (_, { id, name }, { dataSources: { array } }) =>
         {
-          const item = db.items.find((item) => item.id === id);
-
-          item.name = name;
+          const item = array.update(id, name);
 
           const payload = { item };
 
