@@ -1,6 +1,6 @@
 import { DataSource } from 'apollo-datasource';
 
-import postgres from '../../database/postgresql';
+import postgresql from '../database/postgresql';
 
 
 const sql =
@@ -55,27 +55,19 @@ function process(rows)
 
   rows.forEach(d => callback(d));
 
-  let i_db = 0;
-
   const databases = [];
 
   for (const [k_db, v_db] of Object.entries(rt))
   {
-    let i_sm = 0;
-
     const schemas = [];
 
     for (const [k_sm, v_sm] of Object.entries(v_db))
     {
-      let i_tb = 0;
-
       const tables = [];
 
       for (const [k_tb, v_tb] of Object.entries(v_sm))
       {
-        let i_pr = 0;
-
-        const properties = [];
+        const columns = [];
 
         const note = v_tb.____name_zh;
 
@@ -83,16 +75,16 @@ function process(rows)
 
         for (const [k_pr, v_pr] of Object.entries(v_tb))
         {
-          properties.push({ index: i_pr++, name: k_pr, type: v_pr.type, note: v_pr.note });
+          columns.push({ name: k_pr, type: v_pr.type, note: v_pr.note });
         }
 
-        tables.push({ index: i_tb++, name: k_tb, properties, note });
+        tables.push({ name: k_tb, properties: columns, note });
       }
 
-      schemas.push({ index: i_sm++, name: k_sm, entities: tables });
+      schemas.push({ name: k_sm, entities: tables });
     }
 
-    databases.push({ index: i_db++, name: k_db, projects: schemas });
+    databases.push({ name: k_db, projects: schemas });
   }
 
   return databases;
@@ -110,11 +102,13 @@ class Source extends DataSource
   {
   }
 
-  async structure(database)
+  async structure(name)
   {
-    const rows = await postgres.query(database ? database : 'postgres', sql);
+    const rows = await postgresql.query(name ? name : 'postgres', sql);
 
-    return process(rows);
+    const domain = process(rows)[0];
+
+    return { name: '', note: '', projects: domain.projects };
   }
 }
 

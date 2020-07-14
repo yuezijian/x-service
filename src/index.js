@@ -16,11 +16,15 @@ import { ApolloServer } from 'apollo-server-koa';
 
 import { SubscriptionServer } from 'subscriptions-transport-ws';
 
-import schema from './service/schema';
+import { mergeSchemas } from 'graphql-tools';
 
-import SourceArray from './service/datasource/array';
-import SourceORM   from './service/datasource/orm';
-import SourcePG    from './service/datasource/postgresql';
+import example    from './service/example';
+import orm        from './service/orm';
+import postgresql from './service/postgresql';
+
+import SourceExample from './datasource/example';
+import SourceORM     from './datasource/orm';
+import SourcePG      from './datasource/postgresql';
 
 
 const secret = fs.readFileSync('./secret.pub');
@@ -81,6 +85,9 @@ function context_koa({ ctx })
   return { user: { id: 0 } };
 }
 
+const schema = mergeSchemas({ schemas: [ example, orm, postgresql ] });
+
+
 const config =
   {
     schema,
@@ -94,13 +101,13 @@ const config =
 
     dataSources: () =>
     {
-      const array = new SourceArray();
+      const array = new SourceExample();
 
       const orm = new SourceORM();
 
-      const postgres = new SourcePG();
+      const postgresql = new SourcePG();
 
-      return { array, orm, postgres };
+      return { array, orm, postgresql };
     }
   };
 

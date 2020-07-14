@@ -14,7 +14,7 @@ async function execute(config, sql)
   return result.rows;
 }
 
-const postgres =
+const postgresql =
   {
     async query(database, sql)
     {
@@ -34,4 +34,4 @@ const postgres =
   }
 
 
-export default postgres;
+export default postgresql;
