@@ -5,7 +5,7 @@ import jwt from 'jsonwebtoken';
 
 import Koa           from 'koa';
 import KoaBodyParser from 'koa-bodyparser';
-import KoaJWT        from 'koa-jwt';
+// import KoaJWT        from 'koa-jwt';
 
 import KoaCORS   from '@koa/cors';
 import KoaRouter from '@koa/router';
@@ -18,22 +18,24 @@ import { SubscriptionServer } from 'subscriptions-transport-ws';
 
 import { mergeSchemas } from 'graphql-tools';
 
+import docker     from './service/docker';
 import example    from './service/example';
 import orm        from './service/orm';
 import postgresql from './service/postgresql';
 
+import SourceDocker  from './datasource/docker';
 import SourceExample from './datasource/example';
 import SourceORM     from './datasource/orm';
 import SourcePG      from './datasource/postgresql';
 
 
-const secret = fs.readFileSync('./secret.pub');
+// const secret = fs.readFileSync('./secret.pub');
 
-const payload = {};
+// const payload = {};
 
-const token = jwt.sign(payload, secret);
+// const token = jwt.sign(payload, secret);
 
-console.log(token);
+// console.log(token);
 
 
 function Status_401(ctx, next)
@@ -85,7 +87,12 @@ function context_koa({ ctx })
   return { user: { id: 0 } };
 }
 
-const schema = mergeSchemas({ schemas: [ example, orm, postgresql ] });
+const schemas =
+  [
+    docker, example, orm, postgresql
+  ];
+
+const schema = mergeSchemas({ schemas });
 
 
 const config =
@@ -101,13 +108,15 @@ const config =
 
     dataSources: () =>
     {
-      const array = new SourceExample();
+      const docker = new SourceDocker();
+
+      const example = new SourceExample();
 
       const orm = new SourceORM();
 
       const postgresql = new SourcePG();
 
-      return { array, orm, postgresql };
+      return { docker, example, orm, postgresql };
     }
   };
 
@@ -130,11 +139,13 @@ app.use(router.routes());
 app.use(router.allowedMethods());
 
 
-const option =
-  {
-    key: fs.readFileSync('./server.key', 'utf8'),
-    cert: fs.readFileSync('./server.cert', 'utf8')
-  };
+// const option =
+//   {
+//     key: fs.readFileSync('./server.key', 'utf8'),
+//     cert: fs.readFileSync('./server.cert', 'utf8')
+//   };
+
+const option = {};
 
 const server = http.createServer(option, app.callback());
 

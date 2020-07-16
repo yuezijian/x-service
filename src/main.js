@@ -1,4 +1,6 @@
-import orm from './datasource/orm';
+import Source from './datasource/postgresql';
 
 
-orm.reset().catch(error => console.log(error));
+const source = new Source();
+
+source.structure().catch(error => console.log(error));

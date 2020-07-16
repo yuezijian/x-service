@@ -3,91 +3,87 @@ import { DataSource } from 'apollo-datasource';
 import postgresql from '../database/postgresql';
 
 
-const sql =
-  `
-  select
-    pgtb.table_catalog                                                                             as database,
-    pgtb.table_schema                                                                              as schema,
-    tb.relname                                                                                     as table_en,
-    cast(obj_description(relfilenode, 'pg_class') as varchar)                                      as table_zh,
-    col.attname                                                                                    as property,
-    cold.description                                                                               as note,
-    concat_ws('', tp.typname, SUBSTRING(format_type(col.atttypid, col.atttypmod) from '\\(.*\\)')) as type
-  from pg_attribute col
-    left join pg_class tb on tb.oid = col.attrelid
-    left join pg_description cold on cold.objoid = col.attrelid and cold.objsubid = col.attnum
-    left join pg_type tp on col.atttypid = tp.oid
-    left join information_schema.tables pgtb on tb.relname = pgtb.table_name
-  where col.attnum > 0
-    and cold.objsubid = col.attnum
-    and cold.objoid = col.attrelid
-  order by tb.relname, col.attnum
-  `
-;
-
-function get_or_create(node, key)
+function stratify(array, levels)
 {
-  if (!node[key])
+  const root = {};
+
+  for (const object of array)
   {
-    node[key] = {};
-  }
+    let node = root;
 
-  return node[key];
-}
-
-
-function process(rows)
-{
-  const rt = {};
-
-  const callback = (v) =>
-  {
-    const db = get_or_create(rt, v.database);
-    const sm = get_or_create(db, v.schema  );
-    const tb = get_or_create(sm, v.table_en);
-    const pr = get_or_create(tb, v.property);
-
-    tb.____name_zh = v.table_zh;
-
-    pr.type = v.type;
-    pr.note = v.note;
-  };
-
-  rows.forEach(d => callback(d));
-
-  const databases = [];
-
-  for (const [k_db, v_db] of Object.entries(rt))
-  {
-    const schemas = [];
-
-    for (const [k_sm, v_sm] of Object.entries(v_db))
+    for (const { name, parent, properties } of levels)
     {
-      const tables = [];
+      const value = object[name];
 
-      for (const [k_tb, v_tb] of Object.entries(v_sm))
+      let children = node[parent];
+
+      if (!children)
       {
-        const columns = [];
-
-        const note = v_tb.____name_zh;
-
-        delete v_tb.____name_zh;
-
-        for (const [k_pr, v_pr] of Object.entries(v_tb))
-        {
-          columns.push({ name: k_pr, type: v_pr.type, note: v_pr.note });
-        }
-
-        tables.push({ name: k_tb, properties: columns, note });
+        children = node[parent] = [];
       }
 
-      schemas.push({ name: k_sm, entities: tables });
-    }
+      let child = children.find(v => v.name === value);
 
-    databases.push({ name: k_db, projects: schemas });
+      if (!child)
+      {
+        child = { name: value };
+
+        properties.forEach(property => child[property.as ? property.as : property.name] = object[property.name]);
+
+        children.push(child);
+      }
+
+      node = child;
+    }
   }
 
-  return databases;
+  return root;
+}
+
+async function pg_databases()
+{
+  const sql = 'select datname as name from pg_database where datistemplate=\'f\';';
+
+  const rows = await postgresql.query('postgres', sql);
+
+  return rows.map(value => value.name);
+}
+
+async function pg_database(name)
+{
+  const sql =
+    `
+      select
+        pgtb.table_catalog                                                                             as database,
+        pgtb.table_schema                                                                              as schema,
+        tb.relname                                                                                     as table,
+        col.attname                                                                                    as column,
+        concat_ws('', tp.typname, SUBSTRING(format_type(col.atttypid, col.atttypmod) from '\\(.*\\)')) as type,
+        cast(obj_description(relfilenode, 'pg_class') as varchar)                                      as note_table,
+        cold.description                                                                               as note_column
+      from pg_attribute col
+        left join pg_class tb on tb.oid = col.attrelid
+        left join pg_description cold on cold.objoid = col.attrelid and cold.objsubid = col.attnum
+        left join pg_type tp on col.atttypid = tp.oid
+        left join information_schema.tables pgtb on tb.relname = pgtb.table_name
+      where col.attnum > 0
+        and cold.objsubid = col.attnum
+        and cold.objoid = col.attrelid
+      order by tb.relname, col.attnum
+    `
+  ;
+
+  const rows = await postgresql.query(name, sql);
+
+  const levels =
+    [
+      { name: 'database', parent: 'domains',    properties: [                                                      ] },
+      { name: 'schema',   parent: 'projects',   properties: [                                                      ] },
+      { name: 'table',    parent: 'entities',   properties: [                   { name: 'note_table',  as: 'note' }] },
+      { name: 'column',   parent: 'properties', properties: [ { name: 'type' }, { name: 'note_column', as: 'note' }] }
+    ];
+
+  return stratify(rows, levels).domains;
 }
 
 
@@ -102,13 +98,23 @@ class Source extends DataSource
   {
   }
 
-  async structure(name)
+  async structure()
   {
-    const rows = await postgresql.query(name ? name : 'postgres', sql);
+    const dbs = await pg_databases();
 
-    const domain = process(rows)[0];
+    const domains = [];
 
-    return { name: '', note: '', projects: domain.projects };
+    for (const name of dbs)
+    {
+      const data = await pg_database(name);
+
+      if (data)
+      {
+        domains.push(data[0]);
+      }
+    }
+
+    return domains;
   }
 }
 

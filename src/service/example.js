@@ -12,22 +12,22 @@ const resolvers =
   {
     Query:
       {
-        item: (_1, { id }, { dataSources: { array } }) =>
+        item: (_1, { id }, { dataSources: { example } }) =>
         {
-          return array(id);
+          return example(id);
         },
 
-        items: (_1, _2, { dataSources: { array } }) =>
+        items: (_1, _2, { dataSources: { example } }) =>
         {
-          return array.all();
+          return example.all();
         }
       },
 
     Mutation:
       {
-        item_add: (_, { name }, { dataSources: { array } }) =>
+        item_add: (_, { name }, { dataSources: { example } }) =>
         {
-          const item = array.add(name);
+          const item = example.add(name);
 
           const payload = { item };
 
@@ -36,9 +36,9 @@ const resolvers =
           return { success: true, message: 'done', item };
         },
 
-        item_remove: (_, { id }, { dataSources: { array } }) =>
+        item_remove: (_, { id }, { dataSources: { example } }) =>
         {
-          const item = array.remove(id);
+          const item = example.remove(id);
 
           const payload = { item };
 
@@ -47,9 +47,9 @@ const resolvers =
           return { success: true, message: 'done', item };
         },
 
-        item_update: (_, { id, name }, { dataSources: { array } }) =>
+        item_update: (_, { id, name }, { dataSources: { example } }) =>
         {
-          const item = array.update(id, name);
+          const item = example.update(id, name);
 
           const payload = { item };
 

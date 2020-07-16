@@ -7,18 +7,24 @@ const definitions = gql
   `
     extend type Query
     {
-      pg(name: String): Domain
+      pg_domains: [Domain]
     }
   `;
 
+let temp = null;
 
 const resolvers =
   {
     Query:
       {
-        pg: (_1, { name }, { dataSources: { postgresql } }) =>
+        pg_domains: async (_1, _2, { dataSources: { postgresql } }) =>
         {
-          return postgresql.structure(name);
+          if (!temp)
+          {
+            temp = await postgresql.structure();
+          }
+
+          return temp;
         }
       }
   };
