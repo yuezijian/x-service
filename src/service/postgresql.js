@@ -11,20 +11,13 @@ const definitions = gql
     }
   `;
 
-let temp = null;
-
 const resolvers =
   {
     Query:
       {
         pg_domains: async (_1, _2, { dataSources: { postgresql } }) =>
         {
-          if (!temp)
-          {
-            temp = await postgresql.structure();
-          }
-
-          return temp;
+          return await postgresql.structure();
         }
       }
   };

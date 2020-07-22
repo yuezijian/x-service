@@ -29,11 +29,11 @@ import SourceORM     from './datasource/orm';
 import SourcePG      from './datasource/postgresql';
 
 
-// const secret = fs.readFileSync('./secret.pub');
+const secret = fs.readFileSync('./secret.pub');
 
-// const payload = {};
+const payload = {};
 
-// const token = jwt.sign(payload, secret);
+const token = jwt.sign(payload, secret);
 
 // console.log(token);
 
@@ -101,11 +101,6 @@ const config =
 
     context: context_koa,
 
-    subscriptions:
-      {
-        path: '/subscriptions'
-      },
-
     dataSources: () =>
     {
       const docker = new SourceDocker();
@@ -122,39 +117,37 @@ const config =
 
 const apollo = new ApolloServer(config);
 
-const app = new Koa();
+const koa = new Koa();
 
 const router = new KoaRouter();
 
 router.all(apollo.graphqlPath, apollo.getMiddleware());
 
-app.use(KoaBodyParser());
-app.use(KoaCORS());
+koa.use(KoaBodyParser());
+koa.use(KoaCORS());
 
 // app.use(Status_401);
 
-// app.use(KoaJWT({ secret }).unless({ path: [/^\/authentication/] }));
-// app.use(Authentication);
-app.use(router.routes());
-app.use(router.allowedMethods());
+// koa.use(KoaJWT({ secret }).unless({ path: [/^\/authentication/] }));
+// koa.use(Authentication);
+koa.use(router.routes());
+koa.use(router.allowedMethods());
 
 
-// const option =
-//   {
-//     key: fs.readFileSync('./server.key', 'utf8'),
-//     cert: fs.readFileSync('./server.cert', 'utf8')
-//   };
+const option =
+  {
+    // key: fs.readFileSync('./server.key', 'utf8'),
+    // cert: fs.readFileSync('./server.cert', 'utf8')
+  };
 
-const option = {};
-
-const server = http.createServer(option, app.callback());
+const server = http.createServer(option, koa.callback());
 
 const host = 'localhost';
 const port = 4000;
 
 const callback = () =>
 {
-  new SubscriptionServer({ execute, subscribe, schema }, { server: app });
+  new SubscriptionServer({ execute, subscribe, schema }, { server: koa });
 
   console.log(`🚀 Server ready at http://${ host }:${ port }${ apollo.graphqlPath }`);
   console.log(`🚀 Subscriptions ready at ws://${ host }:${ port }${ apollo.subscriptionsPath }`);

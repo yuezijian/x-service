@@ -18,7 +18,38 @@ const resolvers =
       {
         project: (_1, { name }, { dataSources: { orm } }) =>
         {
-          return { name, entities: orm.entities() };
+          return { name };
+
+          // return { name: 'test', entities: [{ name: 'tt'}] };
+
+          // return { name, entities: orm.entities() };
+        }
+      },
+
+    Domain:
+      {
+        projects: (parent) =>
+        {
+          console.log('domain.projects');
+        }
+      },
+
+    Project:
+      {
+        entities: (parent) =>
+        {
+          console.log('project.entities');
+          console.log(parent);
+        }
+      },
+
+    Entity:
+      {
+        properties: (parent, args, context, info) =>
+        {
+          console.log(parent);
+
+          return [];
         }
       }
 
