@@ -20,7 +20,7 @@ async function connect()
 
 // 根据配置定义 Model
 
-async function define_models(sequelize)
+async function define_models(sequelize, reset = false)
 {
   models.map(model => sequelize.define(model.name, model.attributes, model.options))
 
@@ -29,56 +29,87 @@ async function define_models(sequelize)
   const Order   = sequelize.models['Order'  ];
 
   Patient.hasMany(Order);
-  Order.belongsTo(Patient);
+  Order.belongsTo(Patient, { as: 'patient', foreignKey: 'PatientId' });
 
   Order.hasOne(Drug);
   Drug.belongsTo(Order);
 
-  await sequelize.sync({ force: true });
+  await sequelize.sync({ force: reset });
+
+  // 期望生成相关 GraphQL 结构
+  ;
 }
 
 // 使用配置创建实例
 
-async function create_entity(sequelize, data)
+async function create_entity(sequelize, name, attributes)
 {
-  // 一层层的分解 data，找到所有的 model 和属性
-
   const model = sequelize.models[name];
 
-  // console.log(model.associations.Orders);
-
-  const instance = await model.create(attributes);
-
-  console.log(instance.associations);
-
-  return instance;
+  return model.create(attributes);
 }
 
-async function demo()
+async function find_entity(sequelize, name)
+{
+  const model = sequelize.models[name];
+
+  return model.findOne();
+}
+
+async function create_data(sequelize)
+{
+  const patient = await create_entity(sequelize, 'Patient', { name: '患者1' });
+
+  const order = await create_entity(sequelize, 'Order', { name: '医嘱1', PatientId: patient.id });
+
+  const drug = await create_entity(sequelize, 'Drug', { name: '药品1', OrderId: order.id });
+}
+
+async function run()
 {
   const sequelize = await connect();
 
-  await define_models(sequelize);
+  await define_models(sequelize, true);
 
-  const data =
-    {
-      Patient:
-        {
-          name: '患者1',
+  await create_data(sequelize);
 
-          Order:
-            {
-              name: '医嘱1'
-            }
-        }
-    };
+  const entity = await find_entity(sequelize, 'Patient');
 
-  const entity = await create_entity(sequelize, data);
-
-  // console.log(entity);
+  console.log(entity.toJSON());
 
   await sequelize.close();
 }
 
 
-demo().catch(error => console.log(error));
+// run().catch(error => console.log(error));
+
+
+const demo =
+  {
+    async init()
+    {
+      const sequelize = await connect();
+
+      await define_models(sequelize, true);
+
+      await create_data(sequelize);
+
+      await sequelize.close();
+    },
+
+    async one_entity(name)
+    {
+      const sequelize = await connect();
+
+      await define_models(sequelize);
+
+      const entity = await find_entity(sequelize, name);
+
+      await sequelize.close();
+
+      return entity;
+    }
+  };
+
+
+export default demo;

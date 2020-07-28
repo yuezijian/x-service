@@ -68,7 +68,7 @@ const definitions =
 
     type Query
     {
-      orm: String
+      metadata: String
     }
   `;
 

@@ -20,13 +20,13 @@ import { mergeSchemas } from 'graphql-tools';
 
 import docker     from './service/docker';
 import example    from './service/example';
-import orm        from './service/orm';
+import metadata   from './service/metadata';
 import postgresql from './service/postgresql';
 
-import SourceDocker  from './datasource/docker';
-import SourceExample from './datasource/example';
-import SourceORM     from './datasource/orm';
-import SourcePG      from './datasource/postgresql';
+import SourceDocker   from './datasource/docker';
+import SourceExample  from './datasource/example';
+import SourceMetadata from './datasource/metadata';
+import SourcePG       from './datasource/postgresql';
 
 
 const secret = fs.readFileSync('./secret.pub');
@@ -89,7 +89,7 @@ function context_koa({ ctx })
 
 const schemas =
   [
-    docker, example, orm, postgresql
+    docker, example, postgresql, metadata
   ];
 
 const schema = mergeSchemas({ schemas });
@@ -107,11 +107,11 @@ const config =
 
       const example = new SourceExample();
 
-      const orm = new SourceORM();
+      const metadata = new SourceMetadata();
 
       const postgresql = new SourcePG();
 
-      return { docker, example, orm, postgresql };
+      return { docker, example, metadata, postgresql };
     }
   };
 
@@ -126,7 +126,7 @@ router.all(apollo.graphqlPath, apollo.getMiddleware());
 koa.use(KoaBodyParser());
 koa.use(KoaCORS());
 
-// app.use(Status_401);
+// koa.use(Status_401);
 
 // koa.use(KoaJWT({ secret }).unless({ path: [/^\/authentication/] }));
 // koa.use(Authentication);
