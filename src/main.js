@@ -157,8 +157,12 @@ async function create_dev_data_metadata(Model, Attribute, Association)
   const drug    = await Model.create({ name: 'Drug'    });
 
   await Attribute.create({ name: 'name', type: 'string', ModelId: patient.id });
+
   await Attribute.create({ name: 'name', type: 'string', ModelId:   order.id });
+  await Attribute.create({ name: 'unit', type: 'string', ModelId:   order.id });
+
   await Attribute.create({ name: 'name', type: 'string', ModelId:    drug.id });
+  await Attribute.create({ name: 'note', type: 'string', ModelId:    drug.id });
 
   await Association.create({ name: 'orders', type: 'many', SourceId: patient.id, TargetId: order.id });
   await Association.create({ name: 'drug',   type: 'one',  SourceId:   order.id, TargetId:  drug.id });

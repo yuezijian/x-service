@@ -206,7 +206,18 @@ class ORM
   {
     const Model = this.metaobject.Model;
 
-    const models = await Model.findAll({ include: 'Attributes' });
+    const options =
+      {
+        include: 'Attributes',
+
+        order:
+          [
+            'name',
+            ['Attributes', 'name']
+          ]
+      };
+
+    const models = await Model.findAll(options);
 
     models.forEach(model => console.log(model.toJSON()));
 
